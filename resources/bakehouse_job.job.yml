@@ -2,7 +2,7 @@
 resources:
   jobs:
     bakehouse_medallion_job:
-      name: bakehouse_medallion_job
+      name: databricks_claude_code_ao_vivo_bakehouse_medallion_job
       tasks:
         - task_key: run_bakehouse_pipeline
           pipeline_task:
