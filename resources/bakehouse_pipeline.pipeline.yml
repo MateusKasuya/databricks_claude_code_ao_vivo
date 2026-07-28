@@ -1,0 +1,35 @@
+# Single serverless Lakeflow Declarative Pipeline covering bronze -> silver -> gold
+# for the Bakehouse medallion architecture.
+#
+# The catalog/schema names are never hardcoded: `configuration` wires the bundle's
+# schema resources (resources/bakehouse_schemas.yml) as the single source of truth,
+# and every SQL transformation reads them back via ${medallion_catalog}, ${bronze_schema},
+# ${silver_schema}, ${gold_schema} substitution.
+resources:
+  pipelines:
+    bakehouse_medallion:
+      name: bakehouse_medallion
+
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.bronze.name}
+
+      serverless: true
+      continuous: false
+      development: true
+      photon: true
+      channel: CURRENT
+
+      configuration:
+        medallion_catalog: ${var.catalog}
+        bronze_schema: ${resources.schemas.bronze.name}
+        silver_schema: ${resources.schemas.silver.name}
+        gold_schema: ${resources.schemas.gold.name}
+
+      root_path: ../src/pipelines/bakehouse
+      libraries:
+        - glob:
+            include: ../src/pipelines/bakehouse/transformations/**
+
+      permissions:
+        - level: CAN_VIEW
+          group_name: users

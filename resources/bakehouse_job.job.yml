@@ -1,0 +1,12 @@
+# Orchestrates the Bakehouse medallion pipeline.
+resources:
+  jobs:
+    bakehouse_medallion_job:
+      name: bakehouse_medallion_job
+      tasks:
+        - task_key: run_bakehouse_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.bakehouse_medallion.id}
+      permissions:
+        - level: CAN_VIEW
+          group_name: users

@@ -1,0 +1,75 @@
+name: Databricks CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # So a IDENTIDADE vem do GitHub. O host mora no databricks.yml — fonte unica de verdade.
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+
+jobs:
+  # Roda em qualquer PR, inclusive de fork: nao toca no Databricks, nao precisa de secret.
+  test:
+    name: lint + pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --dev
+      - run: uv run ruff check .
+      - name: pytest (offline)
+        env:
+          DATABRICKS_SKIP_CONNECT: "1"   # nao abre Databricks Connect so para coletar
+        run: uv run pytest -v
+
+  validate:
+    name: bundle validate (prod)
+    runs-on: ubuntu-latest
+    needs: test
+    # Repo PUBLICO: PR de fork nao recebe secrets. E 'bundle validate' NAO e offline — ele
+    # resolve o lookup: do warehouse e checa o root_path via API. Sem credencial ele falha.
+    # Entao PR de fork para aqui, em vez de morrer com erro de auth confuso.
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    concurrency:
+      group: validate-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@v1.8.0
+        with:
+          version: 1.1.0   # mesma versao do CLI local: o CI nao deve te surpreender
+      - run: databricks bundle validate -t prod
+
+  deploy:
+    name: bundle deploy (prod)
+    runs-on: ubuntu-latest
+    needs: validate
+    # Gate humano: o job fica "Waiting for approval" ate o reviewer do environment aprovar.
+    # Cria o environment com: gh api --method PUT /repos/<owner>/<repo>/environments/prod
+    #   --input - <<< '{"reviewers":[{"type":"User","id":165170684}]}'
+    environment: prod
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Um deploy por vez: todos escrevem o MESMO terraform.tfstate em <root_path>/state.
+    # cancel-in-progress FICA false: cancelar no meio do apply deixa o lock preso.
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@v1.8.0
+        with:
+          version: 1.1.0
+      - run: databricks bundle deploy -t prod
+      - name: O que foi para o workspace
+        run: databricks bundle summary -t prod

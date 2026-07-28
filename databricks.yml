@@ -7,12 +7,22 @@ bundle:
 include:
   - resources/*.yml
 
+# In dev mode, DABs would otherwise prefix UC schema names with "dev_<user>_" to
+# avoid collisions when several developers share a catalog. We want the exact
+# schema names (bronze/silver/gold) in every environment, so that's disabled here.
+experimental:
+  skip_name_prefix_for_schema: true
+
 # Variable declarations. These variables are assigned in the dev/prod targets below.
+# The catalog is the ONLY thing that differs between dev and prod. It must never be
+# hardcoded anywhere else (YAML or SQL) — everything else derives from this variable.
 variables:
   catalog:
-    description: The catalog to use
-  schema:
-    description: The schema to use
+    description: The Unity Catalog catalog that hosts the bronze/silver/gold schemas
+  warehouse_id:
+    description: SQL warehouse used to run the AI/BI dashboard
+    lookup:
+      warehouse: Serverless Starter Warehouse
 
 targets:
   dev:
@@ -25,17 +35,17 @@ targets:
     workspace:
       host: https://dbc-0084980a-6974.cloud.databricks.com
     variables:
-      catalog: workspace
-      schema: ${workspace.current_user.short_name}
+      catalog: bakehouse_dev
   prod:
     mode: production
     workspace:
       host: https://dbc-0084980a-6974.cloud.databricks.com
       # We explicitly deploy to /Workspace/Users/mateusvbkasuya@gmail.com to make sure we only have a single copy.
-      root_path: /Workspace/Users/mateusvbkasuya@gmail.com/.bundle/${bundle.name}/${bundle.target}
+      root_path: /Workspace/${bundle.name}
     variables:
-      catalog: workspace
-      schema: prod
+      catalog: bakehouse_prod
     permissions:
       - user_name: mateusvbkasuya@gmail.com
+        level: CAN_MANAGE
+      - service_principal_name: e8f6a483-affd-404c-ab06-4f68d4372656
         level: CAN_MANAGE

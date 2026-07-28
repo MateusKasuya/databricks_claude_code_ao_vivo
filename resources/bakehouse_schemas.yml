@@ -1,0 +1,21 @@
+# Schemas for the Bakehouse medallion architecture: one schema per layer.
+# The catalog they live in is never hardcoded — it comes from ${var.catalog},
+# which the bundle target (dev/prod) resolves. The pipeline configuration
+# references these resources by name (${resources.schemas.<layer>.name}) so
+# this file is the single source of truth for schema names.
+resources:
+  schemas:
+    bronze:
+      catalog_name: ${var.catalog}
+      name: bronze
+      comment: Raw ingestion from samples.bakehouse (transactions, franchises, customers, suppliers, reviews).
+
+    silver:
+      catalog_name: ${var.catalog}
+      name: silver
+      comment: Cleaned and conformed Bakehouse data - typed, standardized, enriched, with quality expectations.
+
+    gold:
+      catalog_name: ${var.catalog}
+      name: gold
+      comment: BI-ready marts for the Bakehouse AI/BI dashboard.

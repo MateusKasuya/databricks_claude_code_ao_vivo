@@ -1,0 +1,10 @@
+# AI/BI dashboard over the gold marts. Catalog/schema are supplied via
+# ${var.catalog} and the gold schema resource, never hardcoded.
+resources:
+  dashboards:
+    bakehouse_overview:
+      display_name: 'Bakehouse - Visao Geral'
+      file_path: ../src/dashboards/bakehouse_overview.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.gold.name}

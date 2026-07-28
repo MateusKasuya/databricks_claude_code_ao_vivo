@@ -32,3 +32,5 @@ packages = ["src"]
 
 [tool.ruff]
 line-length = 120
+extend-exclude = [".claude", ".ai-dev-kit", "scripts/*.ipynb"]
+
