@@ -36,6 +36,10 @@ targets:
       host: https://dbc-0084980a-6974.cloud.databricks.com
     variables:
       catalog: bakehouse_dev
+    resources:
+      pipelines:
+        bakehouse_medallion:
+          development: true
   prod:
     mode: production
     workspace:
