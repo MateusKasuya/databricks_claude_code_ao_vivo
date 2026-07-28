@@ -18,6 +18,7 @@ dev = [
     "databricks-dlt",
     "databricks-connect>=15.4,<15.5",
     "ipykernel",
+    "pyyaml",
 ]
 
 [project.scripts]
