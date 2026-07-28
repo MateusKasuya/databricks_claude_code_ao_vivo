@@ -47,7 +47,7 @@ targets:
       # We explicitly deploy to /Workspace/Users/mateusvbkasuya@gmail.com to make sure we only have a single copy.
       root_path: /Workspace/${bundle.name}
     variables:
-      catalog: bakehouse_prod
+      catalog: bakehouse
     permissions:
       - user_name: mateusvbkasuya@gmail.com
         level: CAN_MANAGE
